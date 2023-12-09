@@ -1,0 +1,106 @@
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+
+public class SaleServiceTest {
+
+    @Mock
+    private SaleRepository repository;
+
+    @InjectMocks
+    private SaleService saleService;
+
+    @Test
+    void testFindSales() {
+        MockitoAnnotations.initMocks(this);
+        
+        // Cria uma página de teste com algumas vendas de teste
+        Page<Sale> testPage = ... // create a test page object with some test sales
+
+        // Configura o comportamento do repositório simulado
+        when(repository.findSales(LocalDate.of(2021, 1, 1), LocalDate.of(2022, 1, 1), Pageable.unpaged()))
+                .thenReturn(testPage);
+
+        Page<Sale> result = saleService.findSales("2021-01-01", "2022-01-01", Pageable.unpaged());
+
+        assertEquals(testPage, result);
+    }
+
+public class SmsSenderTest {
+
+    @Mock
+    private SaleRepository saleRepository;
+
+    @Mock
+    private Twilio twilio;
+
+    @InjectMocks
+    private SmsSender smsSender;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @Test
+    void sendSms_success() {
+        Long saleId = 1L;
+        String twilioSid = "dummySid";
+        String twilioKey = "dummyKey";
+        String twilioPhoneTo = "dummyPhoneTo";
+        String twilioPhoneFrom = "dummyPhoneFrom";
+
+        Sale sale = new Sale();
+        sale.setId(saleId);
+        sale.setSellerName("John Doe");
+        sale.setAmount(BigDecimal.valueOf(100.50));
+        sale.setDate(LocalDate.now());
+        when(saleRepository.findById(saleId)).thenReturn(Optional.of(sale));
+
+        MessageCreator messageCreator = mock(MessageCreator.class);
+        when(twilio.init(anyString(), anyString())).thenReturn(twilio);
+        when(twilio.creator()).thenReturn(messageCreator);
+        when(messageCreator.create()).thenReturn(mock(Message.class));
+
+        // Configurando os números de telefone da Twilio
+        PhoneNumber to = mock(PhoneNumber.class);
+        PhoneNumber from = mock(PhoneNumber.class);
+        when(twilioPhoneTo).thenReturn(to);
+        when(twilioPhoneFrom).thenReturn(from);
+
+        smsSender.sendSms(saleId);
+
+        // Verifique se os métodos necessários foram chamados
+        verify(saleRepository).findById(saleId);
+        verify(twilio).init(twilioSid, twilioKey);
+        verify(twilio).creator();
+        verify(messageCreator).create();
+        verify(from).getPhoneNumber();
+        verify(to).getPhoneNumber();
+    }
+}
+
+}
